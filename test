@@ -1,0 +1,534 @@
+import java.util.*;
+
+class Bus {
+    int busID;
+    String busNumber;
+    String route;
+    int capacity;
+    double ticketPrice;
+
+    public Bus(int busID, String busNumber, String route, int capacity, double ticketPrice) {
+        this.busID = busID;
+        this.busNumber = busNumber;
+        this.route = route;
+        this.capacity = capacity;
+        this.ticketPrice = ticketPrice;
+    }
+
+    public void updateTicketPrice(double price) {
+        this.ticketPrice = price;
+    }
+
+    public void displayBusInfo() {
+        System.out.println("Bus ID: " + busID + ", Number: " + busNumber + ", Route: " + route +
+                ", Capacity: " + capacity + ", Ticket Price: $" + ticketPrice);
+    }
+}
+
+class Booking {
+    int bookingID;
+    int busID;
+    int userID;
+    int seatsBooked;
+    double totalPrice;
+    String status;
+
+    public Booking(int bookingID, int busID, int userID, int seatsBooked, double totalPrice, String status) {
+        this.bookingID = bookingID;
+        this.busID = busID;
+        this.userID = userID;
+        this.seatsBooked = seatsBooked;
+        this.totalPrice = totalPrice;
+        this.status = status;
+    }
+
+    public void displayBookingInfo() {
+        System.out.println("Booking ID: " + bookingID + ", Bus ID: " + busID + ", User ID: " + userID +
+                ", Seats: " + seatsBooked + ", Total Price: $" + totalPrice + ", Status: " + status);
+    }
+}
+
+class User {
+    int userID;
+    String name;
+    String email;
+    String phoneNumber;
+    List<Booking> bookingHistory = new ArrayList<>();
+
+    public User(int userID, String name, String email, String phoneNumber) {
+        this.userID = userID;
+        this.name = name;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+    }
+
+    public List<Bus> searchBus(String route, List<Bus> buses) {
+        List<Bus> result = new ArrayList<>();
+        for (Bus bus : buses) {
+            if (bus.route.equalsIgnoreCase(route)) {
+                result.add(bus);
+            }
+        }
+        return result;
+    }
+
+    public Booking bookTicket(int busID, int seats, List<Bus> buses, List<Booking> bookings) {
+        for (Bus bus : buses) {
+            if (bus.busID == busID && bus.capacity >= seats) {
+                bus.capacity -= seats;
+                Booking booking = new Booking(new Random().nextInt(1000), busID, this.userID, seats, bus.ticketPrice * seats, "Confirmed");
+                bookingHistory.add(booking);
+                bookings.add(booking);
+                return booking;
+            }
+        }
+        return null;
+    }
+
+    public void viewBookingHistory() {
+        if (bookingHistory.isEmpty()) {
+            System.out.println("No booking history found.");
+        } else {
+            System.out.println("Your Booking History:");
+            for (Booking booking : bookingHistory) {
+                booking.displayBookingInfo();
+            }
+        }
+    }
+}
+
+class Admin {
+    int userID;
+    String name;
+    String email;
+    String phoneNumber;
+
+    public Admin(int userID, String name, String email, String phoneNumber) {
+        this.userID = userID;
+        this.name = name;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+    }
+
+    public void addNewBus(List<Bus> buses, Bus bus) {
+        buses.add(bus);
+        System.out.println("Bus added successfully.");
+    }
+
+    public Bus searchBusById(List<Bus> buses, int busID) {
+        for (Bus bus : buses) {
+            if (bus.busID == busID) {
+                return bus;
+            }
+        }
+        return null;
+    }
+
+    public void editBus(List<Bus> buses, int busID, String newRoute, int newCapacity, double newPrice) {
+        Bus bus = searchBusById(buses, busID);
+        if (bus != null) {
+            bus.route = newRoute;
+            bus.capacity = newCapacity;
+            bus.ticketPrice = newPrice;
+            System.out.println("Bus details updated successfully.");
+        } else {
+            System.out.println("Bus not found.");
+        }
+    }
+
+    public void removeBus(List<Bus> buses, int busID) {
+        Bus bus = searchBusById(buses, busID);
+        if (bus != null) {
+            buses.remove(bus);
+            System.out.println("Bus removed successfully.");
+        } else {
+            System.out.println("Bus not found.");
+        }
+    }
+
+    public Booking searchBookingById(List<Booking> bookings, int bookingID) {
+        for (Booking booking : bookings) {
+            if (booking.bookingID == bookingID) {
+                return booking;
+            }
+        }
+        return null;
+    }
+
+    public void cancelBooking(List<Booking> bookings, int bookingID) {
+        Booking booking = searchBookingById(bookings, bookingID);
+        if (booking != null) {
+            bookings.remove(booking);
+            System.out.println("Booking canceled successfully.");
+        } else {
+            System.out.println("Booking not found.");
+        }
+    }
+
+    public void viewAllBookings(List<Booking> bookings) {
+        if (bookings.isEmpty()) {
+            System.out.println("No bookings found.");
+        } else {
+            System.out.println("All Booking History:");
+            for (Booking booking : bookings) {
+                booking.displayBookingInfo();
+            }
+        }
+    }
+}
+
+public class BusBookingSystem {
+    private static Scanner scanner = new Scanner(System.in);
+    private static List<Bus> buses = new ArrayList<>();
+    private static List<Booking> bookings = new ArrayList<>();
+    private static List<User> users = new ArrayList<>();
+    
+    // Initialize some data for testing
+    static {
+        buses.add(new Bus(101, "B101", "New York-Boston", 50, 45.0));
+        buses.add(new Bus(102, "B102", "Boston-Chicago", 45, 60.0));
+        buses.add(new Bus(103, "B103", "Chicago-Detroit", 40, 50.0));
+        
+        User user = new User(1001, "John Doe", "john@example.com", "9876543210");
+        users.add(user);
+    }
+
+    public static void main(String[] args) {
+        displayMainMenu();
+    }
+    
+    private static void displayMainMenu() {
+        while (true) {
+            System.out.println("\n====================================");
+            System.out.println("Welcome to the Bus Booking System!");
+            System.out.println("\nAre you an admin or user?: \n1. Admin \n2. User \n3. Exit");
+            int roleChoice = getIntInput("Enter your role: ");
+            
+            if (roleChoice == 1) {
+                handleAdminFlow();
+            } else if (roleChoice == 2) {
+                displayUserMenu();
+            } else if (roleChoice == 3) {
+                System.out.println("Thank you for using Bus Booking System. Goodbye!");
+                scanner.close();
+                return;
+            } else {
+                System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+    
+    private static void handleAdminFlow() {
+        boolean isCorrect = false;
+        Set<String> validPasswords = new HashSet<>(Arrays.asList("pheavy", "lyvann", "sreynin"));
+        
+        while (!isCorrect) {
+            System.out.print("Enter Admin Password: ");
+            String password = scanner.next();
+            scanner.nextLine(); // Consume newline
+            
+            if (validPasswords.contains(password)) {
+                isCorrect = true;
+                Admin admin = new Admin(1, "Admin", "admin@example.com", "1234567890");
+                displayAdminMenu(admin);
+            } else {
+                System.out.println("Incorrect password! Try again or press 0 to go back to the main menu.");
+                int choice = getIntInput("Enter your choice: ");
+                if (choice == 0) {
+                    return;
+                }
+            }
+        }
+    }
+    
+    private static void displayAdminMenu(Admin admin) {
+        while (true) {
+            System.out.println("\nAdmin Menu:");
+            System.out.println("1. Add Bus\n2. Edit Bus\n3. Remove Bus\n4. Cancel Booking\n5. View All Bookings\n6. Exit to Main Menu");
+            int adminChoice = getIntInput("Enter your choice: ");
+            
+            switch (adminChoice) {
+                case 1:
+                    handleAddBus(admin);
+                    break;
+                case 2:
+                    handleEditBus(admin);
+                    break;
+                case 3:
+                    handleRemoveBus(admin);
+                    break;
+                case 4:
+                    handleCancelBooking(admin);
+                    break;
+                case 5:
+                    admin.viewAllBookings(bookings);
+                    break;
+                case 6:
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+    
+    private static void handleAddBus(Admin admin) {
+        System.out.println("\nEnter Bus Details:");
+        int id = getIntInput("Bus ID: ");
+        System.out.print("Bus Number: ");
+        String number = scanner.next();
+        scanner.nextLine(); // Consume newline
+        System.out.print("Route: ");
+        String route = scanner.nextLine();
+        int capacity = getIntInput("Capacity: ");
+        double price = getDoubleInput("Ticket Price: $");
+        
+        admin.addNewBus(buses, new Bus(id, number, route, capacity, price));
+    }
+    
+    private static void handleEditBus(Admin admin) {
+        int busID = getIntInput("\nEnter Bus ID to Edit: ");
+        Bus bus = admin.searchBusById(buses, busID);
+        
+        if (bus != null) {
+            bus.displayBusInfo();
+            System.out.print("Enter New Route: ");
+            String route = scanner.nextLine();
+            int capacity = getIntInput("Enter New Capacity: ");
+            double price = getDoubleInput("Enter New Ticket Price: $");
+            
+            admin.editBus(buses, busID, route, capacity, price);
+        } else {
+            System.out.println("Bus not found.");
+        }
+    }
+    
+    private static void handleRemoveBus(Admin admin) {
+        int busID = getIntInput("\nEnter Bus ID to Remove: ");
+        admin.removeBus(buses, busID);
+    }
+    
+    private static void handleCancelBooking(Admin admin) {
+        int bookingID = getIntInput("\nEnter Booking ID to Cancel: ");
+        admin.cancelBooking(bookings, bookingID);
+    }
+    
+    private static void displayUserMenu() {
+        while (true) {
+            System.out.println("\nUser Menu:");
+            System.out.println("1. Search Bus by Route\n2. Book Ticket\n3. View Booking History\n4. Cancel Booking\n5. Exit to Main Menu");
+            int userChoice = getIntInput("Enter your choice: ");
+            
+            switch (userChoice) {
+                case 1:
+                    handleSearchBusByRoute();
+                    break;
+                case 2:
+                    handleDirectBookingProcess();
+                    break;
+                case 3:
+                    handleViewBookingHistory();
+                    break;
+                case 4:
+                    handleUserCancelBooking();
+                    break;
+                case 5:
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+    
+    private static void handleSearchBusByRoute() {
+        System.out.print("\nEnter Route to Search (e.g., 'City1-City2'): ");
+        String route = scanner.nextLine();
+        List<Bus> foundBuses = new ArrayList<>();
+        
+        for (Bus bus : buses) {
+            if (bus.route.equalsIgnoreCase(route)) {
+                foundBuses.add(bus);
+            }
+        }
+        
+        if (foundBuses.isEmpty()) {
+            System.out.println("No buses found on this route.");
+        } else {
+            System.out.println("\nBuses available on route '" + route + "':");
+            for (Bus bus : foundBuses) {
+                bus.displayBusInfo();
+            }
+        }
+    }
+    
+    private static void handleDirectBookingProcess() {
+        System.out.println("\nAre you an existing user or a new user?");
+        System.out.println("1. Existing User\n2. New User\n3. Back to User Menu");
+        int choice = getIntInput("Enter your choice: ");
+        
+        User currentUser = null;
+        
+        if (choice == 1) {
+            int userID = getIntInput("Enter User ID: ");
+            currentUser = findUserById(userID);
+            
+            if (currentUser == null) {
+                System.out.println("User not found. Would you like to register as a new user?");
+                System.out.println("1. Yes\n2. No, go back to User Menu");
+                int registerChoice = getIntInput("Enter your choice: ");
+                
+                if (registerChoice == 1) {
+                    currentUser = registerNewUser();
+                } else {
+                    return;
+                }
+            }
+        } else if (choice == 2) {
+            currentUser = registerNewUser();
+        } else {
+            return;
+        }
+        
+        if (currentUser != null) {
+            bookTicketForUser(currentUser);
+        }
+    }
+    
+    private static User registerNewUser() {
+        System.out.println("\nEnter User Details:");
+        int id = getIntInput("User ID: ");
+        System.out.print("Name: ");
+        String name = scanner.nextLine();
+        System.out.print("Email: ");
+        String email = scanner.nextLine();
+        System.out.print("Phone Number: ");
+        String phone = scanner.nextLine();
+        
+        User newUser = new User(id, name, email, phone);
+        users.add(newUser);
+        System.out.println("User registered successfully!");
+        return newUser;
+    }
+    
+    private static void handleViewBookingHistory() {
+        int userID = getIntInput("\nEnter User ID: ");
+        User user = findUserById(userID);
+        
+        if (user != null) {
+            user.viewBookingHistory();
+        } else {
+            System.out.println("User not found.");
+        }
+    }
+    
+    private static void handleUserCancelBooking() {
+        int userID = getIntInput("\nEnter User ID: ");
+        User user = findUserById(userID);
+        
+        if (user == null) {
+            System.out.println("User not found.");
+            return;
+        }
+        
+        if (user.bookingHistory.isEmpty()) {
+            System.out.println("You have no bookings to cancel.");
+            return;
+        }
+        
+        System.out.println("\nYour Booking History:");
+        for (Booking booking : user.bookingHistory) {
+            booking.displayBookingInfo();
+        }
+        
+        int bookingID = getIntInput("\nEnter Booking ID to cancel: ");
+        Booking bookingToCancel = null;
+        
+        for (Booking booking : user.bookingHistory) {
+            if (booking.bookingID == bookingID) {
+                bookingToCancel = booking;
+                break;
+            }
+        }
+        
+        if (bookingToCancel != null) {
+            user.bookingHistory.remove(bookingToCancel);
+            bookings.remove(bookingToCancel);
+            System.out.println("Booking canceled successfully.");
+        } else {
+            System.out.println("Booking not found.");
+        }
+    }
+    
+    private static User findUserById(int userID) {
+        for (User user : users) {
+            if (user.userID == userID) {
+                return user;
+            }
+        }
+        return null;
+    }
+    
+    private static void bookTicketForUser(User user) {
+        // First search for available buses
+        System.out.print("\nEnter Route to Search: ");
+        String route = scanner.nextLine();
+        List<Bus> foundBuses = user.searchBus(route, buses);
+        
+        if (foundBuses.isEmpty()) {
+            System.out.println("No buses found on this route.");
+            return;
+        }
+        
+        System.out.println("\nBuses available on route '" + route + "':");
+        for (Bus bus : foundBuses) {
+            bus.displayBusInfo();
+        }
+        
+        // Ask for date/time (simplified)
+        System.out.print("\nEnter travel date (DD/MM/YYYY): ");
+        String date = scanner.nextLine();
+        
+        // Select bus and number of passengers
+        int busID = getIntInput("Enter Bus ID to book: ");
+        int seats = getIntInput("Enter number of seats to book: ");
+        
+        Booking booking = user.bookTicket(busID, seats, buses, bookings);
+        
+        if (booking != null) {
+            System.out.println("\nBooking successful!");
+            System.out.println("Booking Details:");
+            booking.displayBookingInfo();
+            System.out.println("Travel Date: " + date);
+        } else {
+            System.out.println("Booking failed. Bus ID not found or insufficient seats available.");
+        }
+    }
+    
+    // Helper methods for input handling
+    private static int getIntInput(String prompt) {
+        while (true) {
+            try {
+                System.out.print(prompt);
+                int input = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+                return input;
+            } catch (InputMismatchException e) {
+                System.out.println("Please enter a valid number.");
+                scanner.nextLine(); // Clear the invalid input
+            }
+        }
+    }
+    
+    private static double getDoubleInput(String prompt) {
+        while (true) {
+            try {
+                System.out.print(prompt);
+                double input = scanner.nextDouble();
+                scanner.nextLine(); // Consume newline
+                return input;
+            } catch (InputMismatchException e) {
+                System.out.println("Please enter a valid number.");
+                scanner.nextLine(); // Clear the invalid input
+            }
+        }
+    }
+}
