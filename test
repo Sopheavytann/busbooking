@@ -1,4 +1,6 @@
 import java.util.*;
+import java.text.SimpleDateFormat;
+import java.text.ParseException;
 
 class Bus {
     int busID;
@@ -6,13 +8,22 @@ class Bus {
     String route;
     int capacity;
     double ticketPrice;
+    String departureDate;
+    String departureTime;
+    int driverID;       // Added driver ID field
+    String driverName;  // Added driver name field
 
-    public Bus(int busID, String busNumber, String route, int capacity, double ticketPrice) {
+    public Bus(int busID, String busNumber, String route, int capacity, double ticketPrice, 
+               String departureDate, String departureTime, int driverID, String driverName) {
         this.busID = busID;
         this.busNumber = busNumber;
         this.route = route;
         this.capacity = capacity;
         this.ticketPrice = ticketPrice;
+        this.departureDate = departureDate;
+        this.departureTime = departureTime;
+        this.driverID = driverID;        // Initialize driver ID
+        this.driverName = driverName;    // Initialize driver name
     }
 
     public void updateTicketPrice(double price) {
@@ -21,7 +32,9 @@ class Bus {
 
     public void displayBusInfo() {
         System.out.println("Bus ID: " + busID + ", Number: " + busNumber + ", Route: " + route +
-                ", Capacity: " + capacity + ", Ticket Price: $" + ticketPrice);
+                ", Capacity: " + capacity + ", Ticket Price: $" + ticketPrice + 
+                ", Departure: " + departureDate + " at " + departureTime +
+                ", Driver ID: " + driverID + ", Driver Name: " + driverName);
     }
 }
 
@@ -32,19 +45,25 @@ class Booking {
     int seatsBooked;
     double totalPrice;
     String status;
+    String departureDate;
+    String departureTime;
 
-    public Booking(int bookingID, int busID, int userID, int seatsBooked, double totalPrice, String status) {
+    public Booking(int bookingID, int busID, int userID, int seatsBooked, double totalPrice, 
+                  String status, String departureDate, String departureTime) {
         this.bookingID = bookingID;
         this.busID = busID;
         this.userID = userID;
         this.seatsBooked = seatsBooked;
         this.totalPrice = totalPrice;
         this.status = status;
+        this.departureDate = departureDate;
+        this.departureTime = departureTime;
     }
 
     public void displayBookingInfo() {
         System.out.println("Booking ID: " + bookingID + ", Bus ID: " + busID + ", User ID: " + userID +
-                ", Seats: " + seatsBooked + ", Total Price: $" + totalPrice + ", Status: " + status);
+                ", Seats: " + seatsBooked + ", Total Price: $" + totalPrice + ", Status: " + status +
+                ", Departure: " + departureDate + " at " + departureTime);
     }
 }
 
@@ -72,11 +91,30 @@ class User {
         return result;
     }
 
+    public List<Bus> searchBusByDate(String date, List<Bus> buses) {
+        List<Bus> result = new ArrayList<>();
+        for (Bus bus : buses) {
+            if (bus.departureDate.equals(date)) {
+                result.add(bus);
+            }
+        }
+        return result;
+    }
+
     public Booking bookTicket(int busID, int seats, List<Bus> buses, List<Booking> bookings) {
         for (Bus bus : buses) {
             if (bus.busID == busID && bus.capacity >= seats) {
                 bus.capacity -= seats;
-                Booking booking = new Booking(new Random().nextInt(1000), busID, this.userID, seats, bus.ticketPrice * seats, "Confirmed");
+                Booking booking = new Booking(
+                    new Random().nextInt(1000), 
+                    busID, 
+                    this.userID, 
+                    seats, 
+                    bus.ticketPrice * seats, 
+                    "Confirmed",
+                    bus.departureDate,
+                    bus.departureTime
+                );
                 bookingHistory.add(booking);
                 bookings.add(booking);
                 return booking;
@@ -124,12 +162,18 @@ class Admin {
         return null;
     }
 
-    public void editBus(List<Bus> buses, int busID, String newRoute, int newCapacity, double newPrice) {
+    public void editBus(List<Bus> buses, int busID, String newRoute, int newCapacity, 
+                        double newPrice, String newDate, String newTime, 
+                        int newDriverID, String newDriverName) {
         Bus bus = searchBusById(buses, busID);
         if (bus != null) {
             bus.route = newRoute;
             bus.capacity = newCapacity;
             bus.ticketPrice = newPrice;
+            bus.departureDate = newDate;
+            bus.departureTime = newTime;
+            bus.driverID = newDriverID;
+            bus.driverName = newDriverName;
             System.out.println("Bus details updated successfully.");
         } else {
             System.out.println("Bus not found.");
@@ -182,12 +226,14 @@ public class BusBookingSystem {
     private static List<Bus> buses = new ArrayList<>();
     private static List<Booking> bookings = new ArrayList<>();
     private static List<User> users = new ArrayList<>();
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+    private static SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
     
     // Initialize some data for testing
     static {
-        buses.add(new Bus(101, "B101", "New York-Boston", 50, 45.0));
-        buses.add(new Bus(102, "B102", "Boston-Chicago", 45, 60.0));
-        buses.add(new Bus(103, "B103", "Chicago-Detroit", 40, 50.0));
+        buses.add(new Bus(101, "B101", "New York-Boston", 50, 45.0, "01/03/2025", "08:00", 501, "John Smith"));
+        buses.add(new Bus(102, "B102", "Boston-Chicago", 45, 60.0, "01/03/2025", "10:30", 502, "Mary Johnson"));
+        buses.add(new Bus(103, "B103", "Chicago-Detroit", 40, 50.0, "02/03/2025", "09:15", 503, "Robert Davis"));
         
         User user = new User(1001, "John Doe", "john@example.com", "9876543210");
         users.add(user);
@@ -244,7 +290,7 @@ public class BusBookingSystem {
     private static void displayAdminMenu(Admin admin) {
         while (true) {
             System.out.println("\nAdmin Menu:");
-            System.out.println("1. Add Bus\n2. Edit Bus\n3. Remove Bus\n4. Cancel Booking\n5. View All Bookings\n6. Exit to Main Menu");
+            System.out.println("1. Add Bus\n2. Edit Bus\n3. Remove Bus\n4. View All Buses\n5. Cancel Booking\n6. View All Bookings\n7. Exit to Main Menu");
             int adminChoice = getIntInput("Enter your choice: ");
             
             switch (adminChoice) {
@@ -258,12 +304,15 @@ public class BusBookingSystem {
                     handleRemoveBus(admin);
                     break;
                 case 4:
-                    handleCancelBooking(admin);
+                    showAllBuses();
                     break;
                 case 5:
-                    admin.viewAllBookings(bookings);
+                    handleCancelBooking(admin);
                     break;
                 case 6:
+                    admin.viewAllBookings(bookings);
+                    break;
+                case 7:
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -282,7 +331,18 @@ public class BusBookingSystem {
         int capacity = getIntInput("Capacity: ");
         double price = getDoubleInput("Ticket Price: $");
         
-        admin.addNewBus(buses, new Bus(id, number, route, capacity, price));
+        // Get departure date with validation
+        String departureDate = getValidatedDate("Departure Date (DD/MM/YYYY): ");
+        
+        // Get departure time with validation
+        String departureTime = getValidatedTime("Departure Time (HH:MM): ");
+        
+        // Get driver information
+        int driverID = getIntInput("Driver ID: ");
+        System.out.print("Driver Name: ");
+        String driverName = scanner.nextLine();
+        
+        admin.addNewBus(buses, new Bus(id, number, route, capacity, price, departureDate, departureTime, driverID, driverName));
     }
     
     private static void handleEditBus(Admin admin) {
@@ -296,7 +356,18 @@ public class BusBookingSystem {
             int capacity = getIntInput("Enter New Capacity: ");
             double price = getDoubleInput("Enter New Ticket Price: $");
             
-            admin.editBus(buses, busID, route, capacity, price);
+            // Get new departure date with validation
+            String departureDate = getValidatedDate("New Departure Date (DD/MM/YYYY): ");
+            
+            // Get new departure time with validation
+            String departureTime = getValidatedTime("New Departure Time (HH:MM): ");
+            
+            // Get updated driver information
+            int driverID = getIntInput("New Driver ID: ");
+            System.out.print("New Driver Name: ");
+            String driverName = scanner.nextLine();
+            
+            admin.editBus(buses, busID, route, capacity, price, departureDate, departureTime, driverID, driverName);
         } else {
             System.out.println("Bus not found.");
         }
@@ -315,7 +386,7 @@ public class BusBookingSystem {
     private static void displayUserMenu() {
         while (true) {
             System.out.println("\nUser Menu:");
-            System.out.println("1. Search Bus by Route\n2. Book Ticket\n3. View Booking History\n4. Cancel Booking\n5. Exit to Main Menu");
+            System.out.println("1. Search Bus by Route\n2. Search Bus by Date\n3. View All Available Buses\n4. Book Ticket\n5. View Booking History\n6. Cancel Booking\n7. Exit to Main Menu");
             int userChoice = getIntInput("Enter your choice: ");
             
             switch (userChoice) {
@@ -323,19 +394,59 @@ public class BusBookingSystem {
                     handleSearchBusByRoute();
                     break;
                 case 2:
-                    handleDirectBookingProcess();
+                    handleSearchBusByDate();
                     break;
                 case 3:
-                    handleViewBookingHistory();
+                    showAllBuses();
                     break;
                 case 4:
-                    handleUserCancelBooking();
+                    handleDirectBookingProcess();
                     break;
                 case 5:
+                    handleViewBookingHistory();
+                    break;
+                case 6:
+                    handleUserCancelBooking();
+                    break;
+                case 7:
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
+        }
+    }
+    
+    private static void handleSearchBusByDate() {
+        String searchDate = getValidatedDate("\nEnter Date to Search (DD/MM/YYYY): ");
+        List<Bus> foundBuses = new ArrayList<>();
+        
+        for (Bus bus : buses) {
+            if (bus.departureDate.equals(searchDate)) {
+                foundBuses.add(bus);
+            }
+        }
+        
+        if (foundBuses.isEmpty()) {
+            System.out.println("No buses found on this date.");
+        } else {
+            System.out.println("\nBuses available on date '" + searchDate + "':");
+            for (Bus bus : foundBuses) {
+                bus.displayBusInfo();
+            }
+        }
+    }
+    
+    // New method to show all available buses
+    private static void showAllBuses() {
+        if (buses.isEmpty()) {
+            System.out.println("\nNo buses available in the system.");
+        } else {
+            System.out.println("\nAll Available Buses:");
+            System.out.println("====================================");
+            for (Bus bus : buses) {
+                bus.displayBusInfo();
+            }
+            System.out.println("====================================");
         }
     }
     
@@ -363,7 +474,7 @@ public class BusBookingSystem {
     private static void handleDirectBookingProcess() {
         System.out.println("\nAre you an existing user or a new user?");
         System.out.println("1. Existing User\n2. New User\n3. Back to User Menu");
-        int choice = getIntInput("Enter your choice: ");
+        int choice = getIntInput("Enter your answer: ");
         
         User currentUser = null;
         
@@ -468,27 +579,63 @@ public class BusBookingSystem {
     }
     
     private static void bookTicketForUser(User user) {
-        // First search for available buses
-        System.out.print("\nEnter Route to Search: ");
-        String route = scanner.nextLine();
-        List<Bus> foundBuses = user.searchBus(route, buses);
+        // Show all available buses first
+        showAllBuses();
         
-        if (foundBuses.isEmpty()) {
-            System.out.println("No buses found on this route.");
-            return;
+        // Then search for specific route or date if needed
+        System.out.println("\nWould you like to search for buses?");
+        System.out.println("1. Search by Route\n2. Search by Date\n3. No, continue with booking");
+        int searchChoice = getIntInput("Enter your choice: ");
+        
+        if (searchChoice == 1) {
+            System.out.print("\nEnter Route to Search: ");
+            String route = scanner.nextLine();
+            List<Bus> foundBuses = user.searchBus(route, buses);
+            
+            if (foundBuses.isEmpty()) {
+                System.out.println("No buses found on this route.");
+                return;
+            }
+            
+            System.out.println("\nBuses available on route '" + route + "':");
+            for (Bus bus : foundBuses) {
+                bus.displayBusInfo();
+            }
+        } else if (searchChoice == 2) {
+            String searchDate = getValidatedDate("\nEnter Date to Search (DD/MM/YYYY): ");
+            List<Bus> foundBuses = user.searchBusByDate(searchDate, buses);
+            
+            if (foundBuses.isEmpty()) {
+                System.out.println("No buses found on this date.");
+                return;
+            }
+            
+            System.out.println("\nBuses available on date '" + searchDate + "':");
+            for (Bus bus : foundBuses) {
+                bus.displayBusInfo();
+            }
         }
-        
-        System.out.println("\nBuses available on route '" + route + "':");
-        for (Bus bus : foundBuses) {
-            bus.displayBusInfo();
-        }
-        
-        // Ask for date/time (simplified)
-        System.out.print("\nEnter travel date (DD/MM/YYYY): ");
-        String date = scanner.nextLine();
         
         // Select bus and number of passengers
         int busID = getIntInput("Enter Bus ID to book: ");
+        Bus selectedBus = null;
+        
+        for (Bus bus : buses) {
+            if (bus.busID == busID) {
+                selectedBus = bus;
+                break;
+            }
+        }
+        
+        if (selectedBus == null) {
+            System.out.println("Bus not found with ID: " + busID);
+            return;
+        }
+        
+        // Display the selected bus information
+        System.out.println("\nSelected Bus Details:");
+        selectedBus.displayBusInfo();
+        
         int seats = getIntInput("Enter number of seats to book: ");
         
         Booking booking = user.bookTicket(busID, seats, buses, bookings);
@@ -497,7 +644,6 @@ public class BusBookingSystem {
             System.out.println("\nBooking successful!");
             System.out.println("Booking Details:");
             booking.displayBookingInfo();
-            System.out.println("Travel Date: " + date);
         } else {
             System.out.println("Booking failed. Bus ID not found or insufficient seats available.");
         }
@@ -528,6 +674,36 @@ public class BusBookingSystem {
             } catch (InputMismatchException e) {
                 System.out.println("Please enter a valid number.");
                 scanner.nextLine(); // Clear the invalid input
+            }
+        }
+    }
+    
+    private static String getValidatedDate(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String dateStr = scanner.nextLine();
+            try {
+                // Validate the date format
+                dateFormat.setLenient(false);
+                dateFormat.parse(dateStr);
+                return dateStr;
+            } catch (ParseException e) {
+                System.out.println("Invalid date format. Please use DD/MM/YYYY format.");
+            }
+        }
+    }
+    
+    private static String getValidatedTime(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String timeStr = scanner.nextLine();
+            try {
+                // Validate the time format
+                timeFormat.setLenient(false);
+                timeFormat.parse(timeStr);
+                return timeStr;
+            } catch (ParseException e) {
+                System.out.println("Invalid time format. Please use HH:MM format (24-hour format).");
             }
         }
     }
