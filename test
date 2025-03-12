@@ -1,6 +1,7 @@
 import java.util.*;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
+import java.io.*;
 
 class Bus {
     int busID;
@@ -10,8 +11,8 @@ class Bus {
     double ticketPrice;
     String departureDate;
     String departureTime;
-    int driverID;       // Added driver ID field
-    String driverName;  // Added driver name field
+    int driverID;
+    String driverName;
 
     public Bus(int busID, String busNumber, String route, int capacity, double ticketPrice, 
                String departureDate, String departureTime, int driverID, String driverName) {
@@ -22,8 +23,8 @@ class Bus {
         this.ticketPrice = ticketPrice;
         this.departureDate = departureDate;
         this.departureTime = departureTime;
-        this.driverID = driverID;        // Initialize driver ID
-        this.driverName = driverName;    // Initialize driver name
+        this.driverID = driverID;
+        this.driverName = driverName;
     }
 
     public void updateTicketPrice(double price) {
@@ -35,6 +36,32 @@ class Bus {
                 ", Capacity: " + capacity + ", Ticket Price: $" + ticketPrice + 
                 ", Departure: " + departureDate + " at " + departureTime +
                 ", Driver ID: " + driverID + ", Driver Name: " + driverName);
+    }
+    
+    // Convert bus object to CSV format string
+    public String toCSV() {
+        return busID + "," + busNumber + "," + route + "," + capacity + "," + 
+               ticketPrice + "," + departureDate + "," + departureTime + "," + 
+               driverID + "," + driverName;
+    }
+    
+    // Parse a CSV line into a Bus object
+    public static Bus fromCSV(String csvLine) {
+        String[] parts = csvLine.split(",");
+        if (parts.length == 9) {
+            return new Bus(
+                Integer.parseInt(parts[0]),    // busID
+                parts[1],                      // busNumber
+                parts[2],                      // route
+                Integer.parseInt(parts[3]),    // capacity
+                Double.parseDouble(parts[4]),  // ticketPrice
+                parts[5],                      // departureDate
+                parts[6],                      // departureTime
+                Integer.parseInt(parts[7]),    // driverID
+                parts[8]                       // driverName
+            );
+        }
+        return null;
     }
 }
 
@@ -221,6 +248,58 @@ class Admin {
     }
 }
 
+// Modified FileManager class to use Businfo.csv instead of book1.csv
+class FileManager {
+    private static final String CSV_FILE = "Businfo.csv";
+    private static final String CSV_HEADER = "BusID,BusNumber,Route,Capacity,TicketPrice,DepartureDate,DepartureTime,DriverID,DriverName";
+    
+    // Save all buses to CSV file
+    public static void saveBusesToCSV(List<Bus> buses) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(CSV_FILE))) {
+            // Write header
+            writer.println(CSV_HEADER);
+            
+            // Write each bus to CSV
+            for (Bus bus : buses) {
+                writer.println(bus.toCSV());
+            }
+            System.out.println("Bus data saved to " + CSV_FILE + " successfully!");
+        } catch (IOException e) {
+            System.out.println("Error saving to CSV file: " + e.getMessage());
+        }
+    }
+    
+    // Load buses from CSV file
+    public static List<Bus> loadBusesFromCSV() {
+        List<Bus> buses = new ArrayList<>();
+        File file = new File(CSV_FILE);
+        
+        // If file doesn't exist, return empty list
+        if (!file.exists()) {
+            System.out.println("CSV file not found. Starting with empty bus list.");
+            return buses;
+        }
+        
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            // Skip header
+            String line = reader.readLine();
+            
+            // Read each line and convert to Bus object
+            while ((line = reader.readLine()) != null) {
+                Bus bus = Bus.fromCSV(line);
+                if (bus != null) {
+                    buses.add(bus);
+                }
+            }
+            System.out.println("Loaded " + buses.size() + " buses from " + CSV_FILE);
+        } catch (IOException e) {
+            System.out.println("Error reading from CSV file: " + e.getMessage());
+        }
+        
+        return buses;
+    }
+}
+
 public class BusBookingSystem {
     private static Scanner scanner = new Scanner(System.in);
     private static List<Bus> buses = new ArrayList<>();
@@ -229,11 +308,19 @@ public class BusBookingSystem {
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
     private static SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
     
-    // Initialize some data for testing
+    // Initialize data
     static {
-        buses.add(new Bus(101, "B101", "New York-Boston", 50, 45.0, "01/03/2025", "08:00", 501, "John Smith"));
-        buses.add(new Bus(102, "B102", "Boston-Chicago", 45, 60.0, "01/03/2025", "10:30", 502, "Mary Johnson"));
-        buses.add(new Bus(103, "B103", "Chicago-Detroit", 40, 50.0, "02/03/2025", "09:15", 503, "Robert Davis"));
+        // Try to load bus data from CSV file
+        buses = FileManager.loadBusesFromCSV();
+        
+        // If no data was loaded, initialize with default data
+        if (buses.isEmpty()) {
+            buses.add(new Bus(101, "B101", "New York-Boston", 50, 45.0, "01/03/2025", "08:00", 501, "John Smith"));
+            buses.add(new Bus(102, "B102", "Boston-Chicago", 45, 60.0, "01/03/2025", "10:30", 502, "Mary Johnson"));
+            buses.add(new Bus(103, "B103", "Chicago-Detroit", 40, 50.0, "02/03/2025", "09:15", 503, "Robert Davis"));
+            // Save initial data to CSV
+            FileManager.saveBusesToCSV(buses);
+        }
         
         User user = new User(1001, "John Doe", "john@example.com", "9876543210");
         users.add(user);
@@ -290,18 +377,24 @@ public class BusBookingSystem {
     private static void displayAdminMenu(Admin admin) {
         while (true) {
             System.out.println("\nAdmin Menu:");
-            System.out.println("1. Add Bus\n2. Edit Bus\n3. Remove Bus\n4. View All Buses\n5. Cancel Booking\n6. View All Bookings\n7. Exit to Main Menu");
+            System.out.println("1. Add Bus\n2. Edit Bus\n3. Remove Bus\n4. View All Buses\n5. Cancel Booking\n6. View All Bookings\n7. Save Bus Data to CSV\n8. Load Bus Data from CSV\n9. Exit to Main Menu");
             int adminChoice = getIntInput("Enter your choice: ");
             
             switch (adminChoice) {
                 case 1:
                     handleAddBus(admin);
+                    // Automatically save after adding
+                    FileManager.saveBusesToCSV(buses);
                     break;
                 case 2:
                     handleEditBus(admin);
+                    // Automatically save after editing
+                    FileManager.saveBusesToCSV(buses);
                     break;
                 case 3:
                     handleRemoveBus(admin);
+                    // Automatically save after removing
+                    FileManager.saveBusesToCSV(buses);
                     break;
                 case 4:
                     showAllBuses();
@@ -313,6 +406,14 @@ public class BusBookingSystem {
                     admin.viewAllBookings(bookings);
                     break;
                 case 7:
+                    FileManager.saveBusesToCSV(buses);
+                    break;
+                case 8:
+                    buses = FileManager.loadBusesFromCSV();
+                    break;
+                case 9:
+                    // Save changes before exiting
+                    FileManager.saveBusesToCSV(buses);
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -401,6 +502,8 @@ public class BusBookingSystem {
                     break;
                 case 4:
                     handleDirectBookingProcess();
+                    // Save bus data after booking to update capacities
+                    FileManager.saveBusesToCSV(buses);
                     break;
                 case 5:
                     handleViewBookingHistory();
@@ -436,7 +539,7 @@ public class BusBookingSystem {
         }
     }
     
-    // New method to show all available buses
+    // Method to show all available buses
     private static void showAllBuses() {
         if (buses.isEmpty()) {
             System.out.println("\nNo buses available in the system.");
