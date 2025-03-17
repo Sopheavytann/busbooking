@@ -14,9 +14,9 @@ class Bus {
     int driverID;
     String driverName;
 
-    public Bus(int busID, String busNumber, String route, int capacity, double ticketPrice, 
+    public Bus(String busNumber, String route, int capacity, double ticketPrice, 
                String departureDate, String departureTime, int driverID, String driverName) {
-        this.busID = busID;
+        this.busID = generateBusID(); // Auto-generate Bus ID
         this.busNumber = busNumber;
         this.route = route;
         this.capacity = capacity;
@@ -25,6 +25,10 @@ class Bus {
         this.departureTime = departureTime;
         this.driverID = driverID;
         this.driverName = driverName;
+    }
+
+    private static int generateBusID() {
+        return new Random().nextInt(9000) + 1000; // Generate random 4-digit ID
     }
 
     public void updateTicketPrice(double price) {
@@ -38,19 +42,16 @@ class Bus {
                 ", Driver ID: " + driverID + ", Driver Name: " + driverName);
     }
 
-    // Convert bus object to CSV format string
     public String toCSV() {
         return busID + "," + busNumber + "," + route + "," + capacity + "," + 
                ticketPrice + "," + departureDate + "," + departureTime + "," + 
                driverID + "," + driverName;
     }
 
-    // Parse a CSV line into a Bus object
     public static Bus fromCSV(String csvLine) {
         String[] parts = csvLine.split(",");
         if (parts.length == 9) {
             return new Bus(
-                Integer.parseInt(parts[0]),    // busID
                 parts[1],                      // busNumber
                 parts[2],                      // route
                 Integer.parseInt(parts[3]),    // capacity
@@ -75,9 +76,9 @@ class Booking {
     String departureDate;
     String departureTime;
 
-    public Booking(int bookingID, int busID, int userID, int seatsBooked, double totalPrice, 
+    public Booking(int busID, int userID, int seatsBooked, double totalPrice, 
                   String status, String departureDate, String departureTime) {
-        this.bookingID = bookingID;
+        this.bookingID = generateBookingID(); // Auto-generate Booking ID
         this.busID = busID;
         this.userID = userID;
         this.seatsBooked = seatsBooked;
@@ -85,6 +86,10 @@ class Booking {
         this.status = status;
         this.departureDate = departureDate;
         this.departureTime = departureTime;
+    }
+
+    private static int generateBookingID() {
+        return new Random().nextInt(9000) + 1000; // Generate random 4-digit ID
     }
 
     public void displayBookingInfo() {
@@ -99,13 +104,19 @@ class User {
     String name;
     String email;
     String phoneNumber;
+    String password;
     List<Booking> bookingHistory = new ArrayList<>();
 
-    public User(int userID, String name, String email, String phoneNumber) {
-        this.userID = userID;
+    public User(String name, String email, String phoneNumber, String password) {
+        this.userID = generateUserID(); // Auto-generate User ID
         this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;
+        this.password = password;
+    }
+
+    private static int generateUserID() {
+        return new Random().nextInt(9000) + 1000; // Generate random 4-digit ID
     }
 
     public List<Bus> searchBus(String route, List<Bus> buses) {
@@ -133,7 +144,6 @@ class User {
             if (bus.busID == busID && bus.capacity >= seats) {
                 bus.capacity -= seats;
                 Booking booking = new Booking(
-                    new Random().nextInt(1000), 
                     busID, 
                     this.userID, 
                     seats, 
@@ -167,12 +177,18 @@ class Admin {
     String name;
     String email;
     String phoneNumber;
+    String password;
 
-    public Admin(int userID, String name, String email, String phoneNumber) {
-        this.userID = userID;
+    public Admin(String name, String email, String phoneNumber, String password) {
+        this.userID = generateAdminID(); // Auto-generate Admin ID
         this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;
+        this.password = password;
+    }
+
+    private static int generateAdminID() {
+        return new Random().nextInt(9000) + 1000; // Generate random 4-digit ID
     }
 
     public void addNewBus(List<Bus> buses, Bus bus) {
@@ -248,17 +264,13 @@ class Admin {
     }
 }
 
-// Modified FileManager class to use Businfo.csv instead of book1.csv
 class FileManager {
     private static final String CSV_FILE = "Businfo.csv";
     private static final String CSV_HEADER = "BusID,BusNumber,Route,Capacity,TicketPrice,DepartureDate,DepartureTime,DriverID,DriverName";
 
-    // Save all buses to CSV file
     public static void saveBusesToCSV(List<Bus> buses) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(CSV_FILE))) {
-            // Write header
             writer.println(CSV_HEADER);
-            // Write each bus to CSV
             for (Bus bus : buses) {
                 writer.println(bus.toCSV());
             }
@@ -268,19 +280,15 @@ class FileManager {
         }
     }
 
-    // Load buses from CSV file
     public static List<Bus> loadBusesFromCSV() {
         List<Bus> buses = new ArrayList<>();
         File file = new File(CSV_FILE);
-        // If file doesn't exist, return empty list
         if (!file.exists()) {
             System.out.println("CSV file not found. Starting with empty bus list.");
             return buses;
         }
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            // Skip header
-            String line = reader.readLine();
-            // Read each line and convert to Bus object
+            String line = reader.readLine(); // Skip header
             while ((line = reader.readLine()) != null) {
                 Bus bus = Bus.fromCSV(line);
                 if (bus != null) {
@@ -303,20 +311,15 @@ public class BusBookingSystem {
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
     private static SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
 
-    // Initialize data
     static {
-        // Try to load bus data from CSV file
         buses = FileManager.loadBusesFromCSV();
-        // If no data was loaded, initialize with default data
         if (buses.isEmpty()) {
-            buses.add(new Bus(101, "B101", "New York-Boston", 50, 45.0, "01/03/2025", "08:00", 501, "John Smith"));
-            buses.add(new Bus(102, "B102", "Boston-Chicago", 45, 60.0, "01/03/2025", "10:30", 502, "Mary Johnson"));
-            buses.add(new Bus(103, "B103", "Chicago-Detroit", 40, 50.0, "02/03/2025", "09:15", 503, "Robert Davis"));
-            // Save initial data to CSV
+            buses.add(new Bus("B101", "New York-Boston", 50, 45.0, "01/03/2025", "08:00", 501, "John Smith"));
+            buses.add(new Bus("B102", "Boston-Chicago", 45, 60.0, "01/03/2025", "10:30", 502, "Mary Johnson"));
+            buses.add(new Bus("B103", "Chicago-Detroit", 40, 50.0, "02/03/2025", "09:15", 503, "Robert Davis"));
             FileManager.saveBusesToCSV(buses);
         }
-        User user = new User(1001, "John Doe", "john@example.com", "9876543210");
-        users.add(user);
+        users.add(new User("John Doe", "john@example.com", "9876543210", "password123"));
     }
 
     public static void main(String[] args) {
@@ -352,7 +355,7 @@ public class BusBookingSystem {
             scanner.nextLine(); // Consume newline
             if (validPasswords.contains(password)) {
                 isCorrect = true;
-                Admin admin = new Admin(1, "Admin", "admin@example.com", "1234567890");
+                Admin admin = new Admin("Admin", "admin@example.com", "1234567890", password);
                 displayAdminMenu(admin);
             } else {
                 System.out.println("Incorrect password! Try again or press 0 to go back to the main menu.");
@@ -372,17 +375,14 @@ public class BusBookingSystem {
             switch (adminChoice) {
                 case 1:
                     handleAddBus(admin);
-                    // Automatically save after adding
                     FileManager.saveBusesToCSV(buses);
                     break;
                 case 2:
                     handleEditBus(admin);
-                    // Automatically save after editing
                     FileManager.saveBusesToCSV(buses);
                     break;
                 case 3:
                     handleRemoveBus(admin);
-                    // Automatically save after removing
                     FileManager.saveBusesToCSV(buses);
                     break;
                 case 4:
@@ -395,7 +395,6 @@ public class BusBookingSystem {
                     admin.viewAllBookings(bookings);
                     break;
                 case 7:
-                    // Save changes before exiting
                     FileManager.saveBusesToCSV(buses);
                     return;
                 default:
@@ -406,7 +405,6 @@ public class BusBookingSystem {
 
     private static void handleAddBus(Admin admin) {
         System.out.println("\nEnter Bus Details:");
-        int id = getIntInput("Bus ID: ");
         System.out.print("Bus Number: ");
         String number = scanner.next();
         scanner.nextLine(); // Consume newline
@@ -414,15 +412,12 @@ public class BusBookingSystem {
         String route = scanner.nextLine();
         int capacity = getIntInput("Capacity: ");
         double price = getDoubleInput("Ticket Price: $");
-        // Get departure date with validation
         String departureDate = getValidatedDate("Departure Date (DD/MM/YYYY): ");
-        // Get departure time with validation
         String departureTime = getValidatedTime("Departure Time (HH:MM): ");
-        // Get driver information
         int driverID = getIntInput("Driver ID: ");
         System.out.print("Driver Name: ");
         String driverName = scanner.nextLine();
-        admin.addNewBus(buses, new Bus(id, number, route, capacity, price, departureDate, departureTime, driverID, driverName));
+        admin.addNewBus(buses, new Bus(number, route, capacity, price, departureDate, departureTime, driverID, driverName));
     }
 
     private static void handleEditBus(Admin admin) {
@@ -434,11 +429,8 @@ public class BusBookingSystem {
             String route = scanner.nextLine();
             int capacity = getIntInput("Enter New Capacity: ");
             double price = getDoubleInput("Enter New Ticket Price: $");
-            // Get new departure date with validation
             String departureDate = getValidatedDate("New Departure Date (DD/MM/YYYY): ");
-            // Get new departure time with validation
             String departureTime = getValidatedTime("New Departure Time (HH:MM): ");
-            // Get updated driver information
             int driverID = getIntInput("New Driver ID: ");
             System.out.print("New Driver Name: ");
             String driverName = scanner.nextLine();
@@ -475,7 +467,6 @@ public class BusBookingSystem {
                     break;
                 case 4:
                     handleDirectBookingProcess();
-                    // Save bus data after booking to update capacities
                     FileManager.saveBusesToCSV(buses);
                     break;
                 case 5:
@@ -510,7 +501,6 @@ public class BusBookingSystem {
         }
     }
 
-    // Method to show all available buses
     private static void showAllBuses() {
         if (buses.isEmpty()) {
             System.out.println("\nNo buses available in the system.");
@@ -573,16 +563,17 @@ public class BusBookingSystem {
 
     private static User registerNewUser() {
         System.out.println("\nEnter User Details:");
-        int id = getIntInput("User ID: ");
         System.out.print("Name: ");
         String name = scanner.nextLine();
         System.out.print("Email: ");
         String email = scanner.nextLine();
         System.out.print("Phone Number: ");
         String phone = scanner.nextLine();
-        User newUser = new User(id, name, email, phone);
+        System.out.print("Password: ");
+        String password = scanner.nextLine();
+        User newUser = new User(name, email, phone, password);
         users.add(newUser);
-        System.out.println("User registered successfully!");
+        System.out.println("User registered successfully! Your User ID is: " + newUser.userID);
         return newUser;
     }
 
@@ -638,16 +629,15 @@ public class BusBookingSystem {
     }
 
     private static void bookTicketForUser(User user) {
-        // Show all available buses first
         showAllBuses();
-        // Then search for specific route or date if needed
         System.out.println("\nWould you like to search for buses?");
         System.out.println("1. Search by Route\n2. Search by Date\n3. No, continue with booking");
         int searchChoice = getIntInput("Enter your choice: ");
+        List<Bus> foundBuses = new ArrayList<>();
         if (searchChoice == 1) {
             System.out.print("\nEnter Route to Search: ");
             String route = scanner.nextLine();
-            List<Bus> foundBuses = user.searchBus(route, buses);
+            foundBuses = user.searchBus(route, buses);
             if (foundBuses.isEmpty()) {
                 System.out.println("No buses found on this route.");
                 return;
@@ -658,7 +648,7 @@ public class BusBookingSystem {
             }
         } else if (searchChoice == 2) {
             String searchDate = getValidatedDate("\nEnter Date to Search (DD/MM/YYYY): ");
-            List<Bus> foundBuses = user.searchBusByDate(searchDate, buses);
+            foundBuses = user.searchBusByDate(searchDate, buses);
             if (foundBuses.isEmpty()) {
                 System.out.println("No buses found on this date.");
                 return;
@@ -668,7 +658,7 @@ public class BusBookingSystem {
                 bus.displayBusInfo();
             }
         }
-        // Select bus and number of passengers
+
         int busID = getIntInput("Enter Bus ID to book: ");
         Bus selectedBus = null;
         for (Bus bus : buses) {
@@ -681,7 +671,7 @@ public class BusBookingSystem {
             System.out.println("Bus not found with ID: " + busID);
             return;
         }
-        // Display the selected bus information
+
         System.out.println("\nSelected Bus Details:");
         selectedBus.displayBusInfo();
         int seats = getIntInput("Enter number of seats to book: ");
@@ -695,7 +685,6 @@ public class BusBookingSystem {
         }
     }
 
-    // Helper methods for input handling
     private static int getIntInput(String prompt) {
         while (true) {
             try {
@@ -729,7 +718,6 @@ public class BusBookingSystem {
             System.out.print(prompt);
             String dateStr = scanner.nextLine();
             try {
-                // Validate the date format
                 dateFormat.setLenient(false);
                 dateFormat.parse(dateStr);
                 return dateStr;
@@ -744,7 +732,6 @@ public class BusBookingSystem {
             System.out.print(prompt);
             String timeStr = scanner.nextLine();
             try {
-                // Validate the time format
                 timeFormat.setLenient(false);
                 timeFormat.parse(timeStr);
                 return timeStr;
