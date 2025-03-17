@@ -37,14 +37,14 @@ class Bus {
                 ", Departure: " + departureDate + " at " + departureTime +
                 ", Driver ID: " + driverID + ", Driver Name: " + driverName);
     }
-    
+
     // Convert bus object to CSV format string
     public String toCSV() {
         return busID + "," + busNumber + "," + route + "," + capacity + "," + 
                ticketPrice + "," + departureDate + "," + departureTime + "," + 
                driverID + "," + driverName;
     }
-    
+
     // Parse a CSV line into a Bus object
     public static Bus fromCSV(String csvLine) {
         String[] parts = csvLine.split(",");
@@ -252,13 +252,12 @@ class Admin {
 class FileManager {
     private static final String CSV_FILE = "Businfo.csv";
     private static final String CSV_HEADER = "BusID,BusNumber,Route,Capacity,TicketPrice,DepartureDate,DepartureTime,DriverID,DriverName";
-    
+
     // Save all buses to CSV file
     public static void saveBusesToCSV(List<Bus> buses) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(CSV_FILE))) {
             // Write header
             writer.println(CSV_HEADER);
-            
             // Write each bus to CSV
             for (Bus bus : buses) {
                 writer.println(bus.toCSV());
@@ -268,22 +267,19 @@ class FileManager {
             System.out.println("Error saving to CSV file: " + e.getMessage());
         }
     }
-    
+
     // Load buses from CSV file
     public static List<Bus> loadBusesFromCSV() {
         List<Bus> buses = new ArrayList<>();
         File file = new File(CSV_FILE);
-        
         // If file doesn't exist, return empty list
         if (!file.exists()) {
             System.out.println("CSV file not found. Starting with empty bus list.");
             return buses;
         }
-        
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             // Skip header
             String line = reader.readLine();
-            
             // Read each line and convert to Bus object
             while ((line = reader.readLine()) != null) {
                 Bus bus = Bus.fromCSV(line);
@@ -295,7 +291,6 @@ class FileManager {
         } catch (IOException e) {
             System.out.println("Error reading from CSV file: " + e.getMessage());
         }
-        
         return buses;
     }
 }
@@ -307,12 +302,11 @@ public class BusBookingSystem {
     private static List<User> users = new ArrayList<>();
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
     private static SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-    
+
     // Initialize data
     static {
         // Try to load bus data from CSV file
         buses = FileManager.loadBusesFromCSV();
-        
         // If no data was loaded, initialize with default data
         if (buses.isEmpty()) {
             buses.add(new Bus(101, "B101", "New York-Boston", 50, 45.0, "01/03/2025", "08:00", 501, "John Smith"));
@@ -321,7 +315,6 @@ public class BusBookingSystem {
             // Save initial data to CSV
             FileManager.saveBusesToCSV(buses);
         }
-        
         User user = new User(1001, "John Doe", "john@example.com", "9876543210");
         users.add(user);
     }
@@ -329,14 +322,13 @@ public class BusBookingSystem {
     public static void main(String[] args) {
         displayMainMenu();
     }
-    
+
     private static void displayMainMenu() {
         while (true) {
             System.out.println("\n====================================");
             System.out.println("Welcome to the Bus Booking System!");
             System.out.println("\nAre you an admin or user?: \n1. Admin \n2. User \n3. Exit");
             int roleChoice = getIntInput("Enter your role: ");
-            
             if (roleChoice == 1) {
                 handleAdminFlow();
             } else if (roleChoice == 2) {
@@ -350,16 +342,14 @@ public class BusBookingSystem {
             }
         }
     }
-    
+
     private static void handleAdminFlow() {
         boolean isCorrect = false;
         Set<String> validPasswords = new HashSet<>(Arrays.asList("pheavy", "lyvann", "sreynin"));
-        
         while (!isCorrect) {
             System.out.print("Enter Admin Password: ");
             String password = scanner.next();
             scanner.nextLine(); // Consume newline
-            
             if (validPasswords.contains(password)) {
                 isCorrect = true;
                 Admin admin = new Admin(1, "Admin", "admin@example.com", "1234567890");
@@ -373,13 +363,12 @@ public class BusBookingSystem {
             }
         }
     }
-    
+
     private static void displayAdminMenu(Admin admin) {
         while (true) {
             System.out.println("\nAdmin Menu:");
-            System.out.println("1. Add Bus\n2. Edit Bus\n3. Remove Bus\n4. View All Buses\n5. Cancel Booking\n6. View All Bookings\n7. Save Bus Data to CSV\n8. Load Bus Data from CSV\n9. Exit to Main Menu");
+            System.out.println("1. Add Bus\n2. Edit Bus\n3. Remove Bus\n4. View All Buses\n5. Cancel Booking\n6. View All Bookings\n7. Exit to Main Menu");
             int adminChoice = getIntInput("Enter your choice: ");
-            
             switch (adminChoice) {
                 case 1:
                     handleAddBus(admin);
@@ -406,12 +395,6 @@ public class BusBookingSystem {
                     admin.viewAllBookings(bookings);
                     break;
                 case 7:
-                    FileManager.saveBusesToCSV(buses);
-                    break;
-                case 8:
-                    buses = FileManager.loadBusesFromCSV();
-                    break;
-                case 9:
                     // Save changes before exiting
                     FileManager.saveBusesToCSV(buses);
                     return;
@@ -420,7 +403,7 @@ public class BusBookingSystem {
             }
         }
     }
-    
+
     private static void handleAddBus(Admin admin) {
         System.out.println("\nEnter Bus Details:");
         int id = getIntInput("Bus ID: ");
@@ -431,65 +414,55 @@ public class BusBookingSystem {
         String route = scanner.nextLine();
         int capacity = getIntInput("Capacity: ");
         double price = getDoubleInput("Ticket Price: $");
-        
         // Get departure date with validation
         String departureDate = getValidatedDate("Departure Date (DD/MM/YYYY): ");
-        
         // Get departure time with validation
         String departureTime = getValidatedTime("Departure Time (HH:MM): ");
-        
         // Get driver information
         int driverID = getIntInput("Driver ID: ");
         System.out.print("Driver Name: ");
         String driverName = scanner.nextLine();
-        
         admin.addNewBus(buses, new Bus(id, number, route, capacity, price, departureDate, departureTime, driverID, driverName));
     }
-    
+
     private static void handleEditBus(Admin admin) {
         int busID = getIntInput("\nEnter Bus ID to Edit: ");
         Bus bus = admin.searchBusById(buses, busID);
-        
         if (bus != null) {
             bus.displayBusInfo();
             System.out.print("Enter New Route: ");
             String route = scanner.nextLine();
             int capacity = getIntInput("Enter New Capacity: ");
             double price = getDoubleInput("Enter New Ticket Price: $");
-            
             // Get new departure date with validation
             String departureDate = getValidatedDate("New Departure Date (DD/MM/YYYY): ");
-            
             // Get new departure time with validation
             String departureTime = getValidatedTime("New Departure Time (HH:MM): ");
-            
             // Get updated driver information
             int driverID = getIntInput("New Driver ID: ");
             System.out.print("New Driver Name: ");
             String driverName = scanner.nextLine();
-            
             admin.editBus(buses, busID, route, capacity, price, departureDate, departureTime, driverID, driverName);
         } else {
             System.out.println("Bus not found.");
         }
     }
-    
+
     private static void handleRemoveBus(Admin admin) {
         int busID = getIntInput("\nEnter Bus ID to Remove: ");
         admin.removeBus(buses, busID);
     }
-    
+
     private static void handleCancelBooking(Admin admin) {
         int bookingID = getIntInput("\nEnter Booking ID to Cancel: ");
         admin.cancelBooking(bookings, bookingID);
     }
-    
+
     private static void displayUserMenu() {
         while (true) {
             System.out.println("\nUser Menu:");
             System.out.println("1. Search Bus by Route\n2. Search Bus by Date\n3. View All Available Buses\n4. Book Ticket\n5. View Booking History\n6. Cancel Booking\n7. Exit to Main Menu");
             int userChoice = getIntInput("Enter your choice: ");
-            
             switch (userChoice) {
                 case 1:
                     handleSearchBusByRoute();
@@ -518,17 +491,15 @@ public class BusBookingSystem {
             }
         }
     }
-    
+
     private static void handleSearchBusByDate() {
         String searchDate = getValidatedDate("\nEnter Date to Search (DD/MM/YYYY): ");
         List<Bus> foundBuses = new ArrayList<>();
-        
         for (Bus bus : buses) {
             if (bus.departureDate.equals(searchDate)) {
                 foundBuses.add(bus);
             }
         }
-        
         if (foundBuses.isEmpty()) {
             System.out.println("No buses found on this date.");
         } else {
@@ -538,7 +509,7 @@ public class BusBookingSystem {
             }
         }
     }
-    
+
     // Method to show all available buses
     private static void showAllBuses() {
         if (buses.isEmpty()) {
@@ -552,18 +523,16 @@ public class BusBookingSystem {
             System.out.println("====================================");
         }
     }
-    
+
     private static void handleSearchBusByRoute() {
         System.out.print("\nEnter Route to Search (e.g., 'City1-City2'): ");
         String route = scanner.nextLine();
         List<Bus> foundBuses = new ArrayList<>();
-        
         for (Bus bus : buses) {
             if (bus.route.equalsIgnoreCase(route)) {
                 foundBuses.add(bus);
             }
         }
-        
         if (foundBuses.isEmpty()) {
             System.out.println("No buses found on this route.");
         } else {
@@ -573,23 +542,19 @@ public class BusBookingSystem {
             }
         }
     }
-    
+
     private static void handleDirectBookingProcess() {
         System.out.println("\nAre you an existing user or a new user?");
         System.out.println("1. Existing User\n2. New User\n3. Back to User Menu");
         int choice = getIntInput("Enter your answer: ");
-        
         User currentUser = null;
-        
         if (choice == 1) {
             int userID = getIntInput("Enter User ID: ");
             currentUser = findUserById(userID);
-            
             if (currentUser == null) {
                 System.out.println("User not found. Would you like to register as a new user?");
                 System.out.println("1. Yes\n2. No, go back to User Menu");
                 int registerChoice = getIntInput("Enter your choice: ");
-                
                 if (registerChoice == 1) {
                     currentUser = registerNewUser();
                 } else {
@@ -601,12 +566,11 @@ public class BusBookingSystem {
         } else {
             return;
         }
-        
         if (currentUser != null) {
             bookTicketForUser(currentUser);
         }
     }
-    
+
     private static User registerNewUser() {
         System.out.println("\nEnter User Details:");
         int id = getIntInput("User ID: ");
@@ -616,53 +580,45 @@ public class BusBookingSystem {
         String email = scanner.nextLine();
         System.out.print("Phone Number: ");
         String phone = scanner.nextLine();
-        
         User newUser = new User(id, name, email, phone);
         users.add(newUser);
         System.out.println("User registered successfully!");
         return newUser;
     }
-    
+
     private static void handleViewBookingHistory() {
         int userID = getIntInput("\nEnter User ID: ");
         User user = findUserById(userID);
-        
         if (user != null) {
             user.viewBookingHistory();
         } else {
             System.out.println("User not found.");
         }
     }
-    
+
     private static void handleUserCancelBooking() {
         int userID = getIntInput("\nEnter User ID: ");
         User user = findUserById(userID);
-        
         if (user == null) {
             System.out.println("User not found.");
             return;
         }
-        
         if (user.bookingHistory.isEmpty()) {
             System.out.println("You have no bookings to cancel.");
             return;
         }
-        
         System.out.println("\nYour Booking History:");
         for (Booking booking : user.bookingHistory) {
             booking.displayBookingInfo();
         }
-        
         int bookingID = getIntInput("\nEnter Booking ID to cancel: ");
         Booking bookingToCancel = null;
-        
         for (Booking booking : user.bookingHistory) {
             if (booking.bookingID == bookingID) {
                 bookingToCancel = booking;
                 break;
             }
         }
-        
         if (bookingToCancel != null) {
             user.bookingHistory.remove(bookingToCancel);
             bookings.remove(bookingToCancel);
@@ -671,7 +627,7 @@ public class BusBookingSystem {
             System.out.println("Booking not found.");
         }
     }
-    
+
     private static User findUserById(int userID) {
         for (User user : users) {
             if (user.userID == userID) {
@@ -680,26 +636,22 @@ public class BusBookingSystem {
         }
         return null;
     }
-    
+
     private static void bookTicketForUser(User user) {
         // Show all available buses first
         showAllBuses();
-        
         // Then search for specific route or date if needed
         System.out.println("\nWould you like to search for buses?");
         System.out.println("1. Search by Route\n2. Search by Date\n3. No, continue with booking");
         int searchChoice = getIntInput("Enter your choice: ");
-        
         if (searchChoice == 1) {
             System.out.print("\nEnter Route to Search: ");
             String route = scanner.nextLine();
             List<Bus> foundBuses = user.searchBus(route, buses);
-            
             if (foundBuses.isEmpty()) {
                 System.out.println("No buses found on this route.");
                 return;
             }
-            
             System.out.println("\nBuses available on route '" + route + "':");
             for (Bus bus : foundBuses) {
                 bus.displayBusInfo();
@@ -707,42 +659,33 @@ public class BusBookingSystem {
         } else if (searchChoice == 2) {
             String searchDate = getValidatedDate("\nEnter Date to Search (DD/MM/YYYY): ");
             List<Bus> foundBuses = user.searchBusByDate(searchDate, buses);
-            
             if (foundBuses.isEmpty()) {
                 System.out.println("No buses found on this date.");
                 return;
             }
-            
             System.out.println("\nBuses available on date '" + searchDate + "':");
             for (Bus bus : foundBuses) {
                 bus.displayBusInfo();
             }
         }
-        
         // Select bus and number of passengers
         int busID = getIntInput("Enter Bus ID to book: ");
         Bus selectedBus = null;
-        
         for (Bus bus : buses) {
             if (bus.busID == busID) {
                 selectedBus = bus;
                 break;
             }
         }
-        
         if (selectedBus == null) {
             System.out.println("Bus not found with ID: " + busID);
             return;
         }
-        
         // Display the selected bus information
         System.out.println("\nSelected Bus Details:");
         selectedBus.displayBusInfo();
-        
         int seats = getIntInput("Enter number of seats to book: ");
-        
         Booking booking = user.bookTicket(busID, seats, buses, bookings);
-        
         if (booking != null) {
             System.out.println("\nBooking successful!");
             System.out.println("Booking Details:");
@@ -751,7 +694,7 @@ public class BusBookingSystem {
             System.out.println("Booking failed. Bus ID not found or insufficient seats available.");
         }
     }
-    
+
     // Helper methods for input handling
     private static int getIntInput(String prompt) {
         while (true) {
@@ -766,7 +709,7 @@ public class BusBookingSystem {
             }
         }
     }
-    
+
     private static double getDoubleInput(String prompt) {
         while (true) {
             try {
@@ -780,7 +723,7 @@ public class BusBookingSystem {
             }
         }
     }
-    
+
     private static String getValidatedDate(String prompt) {
         while (true) {
             System.out.print(prompt);
@@ -795,7 +738,7 @@ public class BusBookingSystem {
             }
         }
     }
-    
+
     private static String getValidatedTime(String prompt) {
         while (true) {
             System.out.print(prompt);
